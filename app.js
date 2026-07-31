@@ -1,6 +1,5 @@
 /* =========================================================
-   ALERTA RECARGAS - FRONTEND COMPLETO
-   Compatible con GitHub Pages
+   ALERTA RECARGAS - FRONTEND CORREGIDO PARA GITHUB PAGES
    ========================================================= */
 
 const state = {
@@ -11,65 +10,67 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
-
-/* =========================================================
-   API
-   ========================================================= */
-
-async function api(action, params = {}) {
-  const apiUrl = window.APP_CONFIG?.API_URL;
-
-  if (!apiUrl || apiUrl.includes("PEGA_AQUI")) {
-    throw new Error("Configure la URL de Apps Script en config.js.");
-  }
-
-  const url = new URL(apiUrl);
-  url.searchParams.set("action", action);
-  url.searchParams.set("_t", Date.now().toString());
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      url.searchParams.set(key, String(value));
-    }
-  });
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    redirect: "follow",
-    cache: "no-store"
-  });
-
-  if (!response.ok) {
-    throw new Error("No fue posible conectar con el servidor.");
-  }
-
-  const text = await response.text();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error("Apps Script no devolvió una respuesta JSON válida.");
-  }
-}
-
-
-/* =========================================================
-   MENSAJES
-   ========================================================= */
-
 function setStatus(id, message = "", type = "") {
-  const element = $(id);
-
-  if (!element) return;
-
-  element.textContent = message;
-  element.className = `status-message ${type}`.trim();
+  const el = $(id);
+  if (!el) return;
+  el.textContent = message;
+  el.className = `status-message ${type}`.trim();
 }
 
+/*
+ * Apps Script + GitHub Pages:
+ * Se usa JSONP para evitar bloqueos CORS.
+ */
+function api(accion, parametros = {}) {
+  return new Promise((resolve, reject) => {
+    const apiUrl = window.APP_CONFIG?.API_URL;
 
-/* =========================================================
-   LOGIN
-   ========================================================= */
+    if (!apiUrl || apiUrl.includes("PEGA_AQUI")) {
+      reject(new Error("Debes colocar la URL real de Apps Script en config.js."));
+      return;
+    }
+
+    const callbackName =
+      `alertaRecargasCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
+    const script = document.createElement("script");
+    const url = new URL(apiUrl);
+
+    url.searchParams.set("accion", accion);
+    url.searchParams.set("callback", callbackName);
+    url.searchParams.set("_t", Date.now().toString());
+
+    Object.entries(parametros).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, String(value));
+      }
+    });
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("El servidor no respondió. Revisa la URL /exec y los permisos del despliegue."));
+    }, 20000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (respuesta) => {
+      cleanup();
+      resolve(respuesta);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("No se pudo conectar con Apps Script."));
+    };
+
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
 
 async function handleLogin(event) {
   event.preventDefault();
@@ -89,8 +90,8 @@ async function handleLogin(event) {
 
     const result = await api("login", { codigo });
 
-    if (!result.ok) {
-      throw new Error(result.mensaje || "Código de acceso incorrecto.");
+    if (!result?.ok) {
+      throw new Error(result?.mensaje || "Código de acceso incorrecto.");
     }
 
     state.session = result;
@@ -103,10 +104,10 @@ async function handleLogin(event) {
 
     renderSession();
     showDashboard();
-
     await loadDashboard();
 
   } catch (error) {
+    console.error(error);
     setStatus("loginStatus", error.message, "error");
   } finally {
     button.disabled = false;
@@ -115,52 +116,23 @@ async function handleLogin(event) {
 }
 
 function renderSession() {
-  const usuario =
-    state.session?.usuario ||
-    state.session?.data?.usuario ||
-    {};
-
-  $("usuarioNombre").textContent =
-    usuario.nombre ||
-    usuario.usuario ||
-    "Usuario";
-
-  $("usuarioRol").textContent =
-    usuario.rol ||
-    "";
+  const usuario = state.session?.usuario || {};
+  $("usuarioNombre").textContent = usuario.nombre || usuario.usuario || "Usuario";
+  $("usuarioRol").textContent = usuario.rol || "";
 
   const select = $("fAgencia");
-
   if (!select) return;
 
-  select.innerHTML =
-    '<option value="">Todas las agencias</option>';
+  select.innerHTML = '<option value="">Todas las agencias</option>';
 
-  const agencias =
-    state.session?.agencias ||
-    state.session?.data?.agencias ||
-    [];
-
-  agencias.forEach((agencia) => {
+  (state.session?.agencias || []).forEach((agencia) => {
     const option = document.createElement("option");
-
-    option.value =
-      agencia.agencia_id ||
-      agencia.id ||
-      agencia.agencia ||
-      "";
-
-    option.textContent =
-      agencia.agencia ||
-      agencia.nombre ||
-      option.value;
-
+    option.value = agencia.agencia_id || agencia.id || agencia.agencia || "";
+    option.textContent = agencia.agencia || agencia.nombre || option.value;
     select.appendChild(option);
   });
 
-  if (usuario.agencia_id) {
-    select.value = usuario.agencia_id;
-  }
+  if (usuario.agencia_id) select.value = usuario.agencia_id;
 }
 
 function showDashboard() {
@@ -170,198 +142,116 @@ function showDashboard() {
 
 function logout() {
   localStorage.removeItem("alertaRecargasSession");
-
   state.session = null;
   state.agencias = [];
   state.registros = [];
 
   $("dashboardView").classList.add("hidden");
   $("loginView").classList.remove("hidden");
-
   $("loginForm").reset();
   setStatus("loginStatus");
-
   $("codigoAcceso").focus();
 }
 
-
-/* =========================================================
-   DASHBOARD
-   ========================================================= */
-
 async function loadDashboard() {
   try {
-    const agencia = $("fAgencia")?.value || "";
-
     const result = await api("dashboard", {
-      agencia
+      agencia: $("fAgencia")?.value || ""
     });
 
-    if (!result.ok) {
-      throw new Error(
-        result.mensaje ||
-        "No fue posible cargar el dashboard."
-      );
+    if (!result?.ok) {
+      throw new Error(result?.mensaje || "No fue posible cargar el dashboard.");
     }
 
     const data = result.data || result;
-
     renderMetrics(data);
-    renderRows(
-      data.registros ||
-      data.historial ||
-      []
-    );
+    renderRows(data.registros || data.historial || []);
 
   } catch (error) {
     console.error(error);
-
     renderMetrics({});
     renderRows([]);
-
-    setStatus(
-      "recargaStatus",
-      error.message,
-      "error"
-    );
+    setStatus("recargaStatus", error.message, "error");
   }
 }
 
 function renderMetrics(data) {
-  $("totalRecargas").textContent =
-    data.totalRecargas ??
-    data.total_recargas ??
-    0;
-
-  $("recargasAbiertas").textContent =
-    data.recargasAbiertas ??
-    data.recargas_abiertas ??
-    0;
-
-  $("recargasCerradas").textContent =
-    data.recargasCerradas ??
-    data.recargas_cerradas ??
-    0;
-
+  $("totalRecargas").textContent = data.totalRecargas ?? data.total_recargas ?? 0;
+  $("recargasAbiertas").textContent = data.recargasAbiertas ?? data.recargas_abiertas ?? 0;
+  $("recargasCerradas").textContent = data.recargasCerradas ?? data.recargas_cerradas ?? 0;
   $("promedioDuracion").textContent =
-    `${data.promedioDuracion ??
-       data.promedio_duracion ??
-       0} min`;
-
+    `${data.promedioDuracion ?? data.promedio_duracion ?? 0} min`;
   $("mayorTiempo").textContent =
-    `${data.mayorTiempoAbierto ??
-       data.mayor_tiempo_abierto ??
-       0} min`;
+    `${data.mayorTiempoAbierto ?? data.mayor_tiempo_abierto ?? 0} min`;
 }
 
 function renderRows(rows = []) {
   const body = $("historyBody");
-
   if (!body) return;
 
   state.registros = Array.isArray(rows) ? rows : [];
+  $("historyCount").textContent = `${state.registros.length} registros`;
 
-  $("historyCount").textContent =
-    `${state.registros.length} registros`;
-
-  if (state.registros.length === 0) {
+  if (!state.registros.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="8" class="empty-row">
-          Sin registros para mostrar.
-        </td>
-      </tr>
-    `;
+        <td colspan="8" class="empty-row">Sin registros para mostrar.</td>
+      </tr>`;
     return;
   }
 
   body.innerHTML = state.registros.map((row) => {
-    const estado =
-      row.estado ||
-      "—";
-
+    const estado = row.estado || "—";
     const tiempo =
       row.tiempo_abierto_actual_min ??
       row.duracion_min ??
       row.tiempo ??
       0;
 
-    const recargaId =
-      row.recarga_id ||
-      row.id ||
-      "";
+    const recargaId = row.recarga_id || row.id || "";
 
-    const action =
+    const accion =
       estado === "ABIERTA"
-        ? `
-          <button
-            type="button"
-            class="table-button"
-            onclick="finishRecharge('${escapeHtml(recargaId)}')">
-            Finalizar
-          </button>
-        `
+        ? `<button type="button" class="table-button"
+             onclick="finishRecharge('${escapeHtml(recargaId)}')">
+             Finalizar
+           </button>`
         : "—";
 
     return `
       <tr>
         <td>${escapeHtml(row.placa || "—")}</td>
         <td>${escapeHtml(row.agencia || "—")}</td>
-        <td>
-          <span class="badge ${escapeHtml(estado)}">
-            ${escapeHtml(estado)}
-          </span>
-        </td>
+        <td><span class="badge ${escapeHtml(estado)}">${escapeHtml(estado)}</span></td>
         <td>${escapeHtml(row.inicio_recarga || row.inicio || "—")}</td>
         <td>${escapeHtml(row.fin_recarga || row.fin || "—")}</td>
         <td>${escapeHtml(tiempo)} min</td>
         <td>${escapeHtml(row.nro_recarga_dia || "—")}</td>
-        <td>${action}</td>
-      </tr>
-    `;
+        <td>${accion}</td>
+      </tr>`;
   }).join("");
 }
 
-
-/* =========================================================
-   RECARGAS
-   ========================================================= */
-
 async function startRecharge() {
   const placa = $("placaInput").value.trim();
-  const agencia = $("fAgencia").value;
-  const observacion = $("observacionInput").value.trim();
 
   if (!placa) {
-    setStatus(
-      "recargaStatus",
-      "Ingrese la placa.",
-      "error"
-    );
+    setStatus("recargaStatus", "Ingrese la placa.", "error");
     return;
   }
 
   try {
-    setStatus(
-      "recargaStatus",
-      "Registrando inicio de recarga..."
-    );
+    setStatus("recargaStatus", "Registrando inicio de recarga...");
 
     const result = await api("iniciarRecarga", {
       placa,
-      agencia,
-      observacion,
-      codigo:
-        state.session?.usuario?.codigo_acceso ||
-        state.session?.codigo ||
-        ""
+      agencia: $("fAgencia").value,
+      observacion: $("observacionInput").value.trim(),
+      codigo: state.session?.usuario?.codigo_acceso || ""
     });
 
-    if (!result.ok) {
-      throw new Error(
-        result.mensaje ||
-        "No fue posible iniciar la recarga."
-      );
+    if (!result?.ok) {
+      throw new Error(result?.mensaje || "No fue posible iniciar la recarga.");
     }
 
     setStatus(
@@ -371,22 +261,15 @@ async function startRecharge() {
     );
 
     $("observacionInput").value = "";
-
     await loadDashboard();
 
   } catch (error) {
-    setStatus(
-      "recargaStatus",
-      error.message,
-      "error"
-    );
+    setStatus("recargaStatus", error.message, "error");
   }
 }
 
 async function finishRecharge(recargaId = "") {
   const placa = $("placaInput").value.trim();
-  const agencia = $("fAgencia").value;
-  const observacion = $("observacionInput").value.trim();
 
   if (!recargaId && !placa) {
     setStatus(
@@ -398,27 +281,18 @@ async function finishRecharge(recargaId = "") {
   }
 
   try {
-    setStatus(
-      "recargaStatus",
-      "Finalizando recarga..."
-    );
+    setStatus("recargaStatus", "Finalizando recarga...");
 
     const result = await api("finalizarRecarga", {
       recarga_id: recargaId,
       placa,
-      agencia,
-      observacion,
-      codigo:
-        state.session?.usuario?.codigo_acceso ||
-        state.session?.codigo ||
-        ""
+      agencia: $("fAgencia").value,
+      observacion: $("observacionInput").value.trim(),
+      codigo: state.session?.usuario?.codigo_acceso || ""
     });
 
-    if (!result.ok) {
-      throw new Error(
-        result.mensaje ||
-        "No fue posible finalizar la recarga."
-      );
+    if (!result?.ok) {
+      throw new Error(result?.mensaje || "No fue posible finalizar la recarga.");
     }
 
     setStatus(
@@ -428,22 +302,12 @@ async function finishRecharge(recargaId = "") {
     );
 
     $("observacionInput").value = "";
-
     await loadDashboard();
 
   } catch (error) {
-    setStatus(
-      "recargaStatus",
-      error.message,
-      "error"
-    );
+    setStatus("recargaStatus", error.message, "error");
   }
 }
-
-
-/* =========================================================
-   UTILIDADES
-   ========================================================= */
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -455,9 +319,7 @@ function escapeHtml(value) {
 }
 
 function restoreSession() {
-  const saved =
-    localStorage.getItem("alertaRecargasSession");
-
+  const saved = localStorage.getItem("alertaRecargasSession");
   if (!saved) return;
 
   try {
@@ -470,39 +332,11 @@ function restoreSession() {
   }
 }
 
-
-/* =========================================================
-   EVENTOS
-   ========================================================= */
-
-$("loginForm")?.addEventListener(
-  "submit",
-  handleLogin
-);
-
-$("btnSalir")?.addEventListener(
-  "click",
-  logout
-);
-
-$("btnActualizar")?.addEventListener(
-  "click",
-  loadDashboard
-);
-
-$("fAgencia")?.addEventListener(
-  "change",
-  loadDashboard
-);
-
-$("btnIniciarRecarga")?.addEventListener(
-  "click",
-  startRecharge
-);
-
-$("btnFinalizarRecarga")?.addEventListener(
-  "click",
-  () => finishRecharge("")
-);
+$("loginForm")?.addEventListener("submit", handleLogin);
+$("btnSalir")?.addEventListener("click", logout);
+$("btnActualizar")?.addEventListener("click", loadDashboard);
+$("fAgencia")?.addEventListener("change", loadDashboard);
+$("btnIniciarRecarga")?.addEventListener("click", startRecharge);
+$("btnFinalizarRecarga")?.addEventListener("click", () => finishRecharge(""));
 
 restoreSession();
