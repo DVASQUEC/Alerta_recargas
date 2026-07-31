@@ -8,55 +8,70 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="app">
-    <header class="hero card">
-      <div class="logo">N</div>
-      <div class="hero-copy">
-        <div class="eyebrow">CONTROL OPERATIVO</div>
-        <h1>ALERTA RECARGAS</h1>
-        <p id="subtitle">Control de recargas por agencia</p>
+  <main class="app-shell">
+    <section class="hero-panel panel">
+      <div class="brand-block">
+        <div class="logo-box">
+          <img src="assets/logo.png" alt="Logo Norte" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+          <span class="logo-fallback" hidden>NORTE</span>
+        </div>
+        <div>
+          <div class="eyebrow">CONTROL OPERATIVO</div>
+          <h1>ALERTA RECARGAS</h1>
+          <p id="subtitle">Control de recargas por centro</p>
+        </div>
       </div>
-      <button id="btnLogout" class="btn secondary hidden" type="button">Salir</button>
-    </header>
 
-    <section id="loginCard" class="card login-card">
+      <div id="heroSession" class="hero-session hidden">
+        <strong id="userName">Usuario</strong>
+        <p id="userMeta"></p>
+        <span id="agencyChip" class="chip"></span>
+        <div class="hero-actions">
+          <button id="btnRefresh" class="btn secondary" type="button">Actualizar</button>
+          <button id="btnLogout" class="btn secondary" type="button">Salir</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="loginCard" class="panel login-panel">
       <h2>Ingreso al sistema</h2>
-      <label for="codigo">Código de acceso</label>
-      <input id="codigo" type="password" autocomplete="current-password" placeholder="Ejemplo: SIS001">
-      <button id="btnLogin" class="btn primary" type="button">Ingresar</button>
+      <div class="login-grid">
+        <div>
+          <label for="codigo">Código de acceso</label>
+          <input id="codigo" type="password" autocomplete="current-password" placeholder="Ingrese su código de acceso">
+        </div>
+        <button id="btnLogin" class="btn primary" type="button">Ingresar</button>
+      </div>
       <p id="loginStatus" class="status"></p>
     </section>
 
     <section id="mainPanel" class="hidden">
-      <section class="card user-card">
-        <div>
-          <strong id="userName">Usuario</strong>
-          <p id="userMeta"></p>
-          <span id="agencyChip" class="chip"></span>
+      <section class="control-panel panel">
+        <div id="filtersCard" class="agency-column hidden">
+          <label for="fAgencia">Agencia</label>
+          <select id="fAgencia"></select>
+          <div class="filters-grid">
+            <select id="fEstado" aria-label="Estado">
+              <option value="">Todos los estados</option>
+              <option value="ABIERTA">ABIERTA</option>
+              <option value="CERRADA">CERRADA</option>
+              <option value="ANULADA">ANULADA</option>
+            </select>
+            <input id="fPlaca" type="search" placeholder="Buscar placa">
+          </div>
         </div>
-        <button id="btnRefresh" class="btn secondary" type="button">Actualizar</button>
-      </section>
 
-      <section id="filtersCard" class="card hidden">
-        <label for="fAgencia">Agencia</label>
-        <select id="fAgencia"></select>
-        <div class="filters-grid">
-          <select id="fEstado">
-            <option value="">Todos los estados</option>
-            <option value="ABIERTA">ABIERTA</option>
-            <option value="CERRADA">CERRADA</option>
-            <option value="ANULADA">ANULADA</option>
-          </select>
-          <input id="fPlaca" type="search" placeholder="Buscar placa">
-        </div>
-      </section>
+        <div class="control-copy">
+          <h2>Control de recarga</h2>
+          <p id="controlDescription">Visualiza y controla la operación de la agencia seleccionada.</p>
 
-      <section id="placaActions" class="card hidden">
-        <h2>Control de recarga</h2>
-        <textarea id="observacion" rows="2" placeholder="Observación opcional"></textarea>
-        <div class="actions">
-          <button id="btnStart" class="btn primary" type="button">Iniciar recarga</button>
-          <button id="btnFinishMine" class="btn danger" type="button">Finalizar recarga</button>
+          <div id="placaActions" class="placa-actions hidden">
+            <textarea id="observacion" rows="2" placeholder="Observación opcional"></textarea>
+            <div class="actions">
+              <button id="btnStart" class="btn primary" type="button">Iniciar recarga</button>
+              <button id="btnFinishMine" class="btn danger" type="button">Finalizar recarga</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -68,12 +83,32 @@
         <article class="kpi"><span>Mayor tiempo abierto</span><strong><span id="kpiMayor">0</span> min</strong></article>
       </section>
 
-      <section class="card">
+      <section class="history-panel panel">
         <div class="section-title">
-          <h2>Recargas recientes</h2>
+          <div>
+            <h2>Historial de recargas</h2>
+            <p>Mostrando últimos 7 día(s). Actualizado: <span id="updatedAt">—</span></p>
+          </div>
           <span id="apiStatus" class="status"></span>
         </div>
-        <div id="cardsList" class="recargas-list"></div>
+
+        <div class="table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Placa</th>
+                <th>Agencia</th>
+                <th>Estado</th>
+                <th>Inicio recarga</th>
+                <th>Fin recarga</th>
+                <th>Tiempo</th>
+                <th>N.º recarga día</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
       </section>
     </section>
   </main>
