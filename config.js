@@ -5,6 +5,6 @@
    ========================================================= */
 
 window.APP_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbyRPkG0PXEIhl9ngPmVbyFQdOuNuXcGNJR8OsaxUryZjJ0YMfKUDnUC6TSGX0K7lNTcig/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbwwpqa5Ja340jptwj5aXEVdO6x4xkAEJzsnWA9TCIS2UfFrttzjcpADAEgGEfCYCHcp/exec",
   APP_NAME: "ALERTA RECARGAS"
 };
