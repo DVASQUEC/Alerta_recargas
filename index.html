@@ -1,123 +1,250 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080808">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b0b">
+
   <title>Alerta Recargas</title>
+
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <main class="app-shell">
-    <section class="hero-panel panel">
-      <div class="brand-block">
-        <div class="logo-box">
-          <img src="assets/logo.png" alt="Logo Norte" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
-          <span class="logo-fallback" hidden>NORTE</span>
-        </div>
-        <div>
-          <div class="eyebrow">CONTROL OPERATIVO</div>
-          <h1>ALERTA RECARGAS</h1>
-          <p id="subtitle">Control de recargas por centro</p>
-        </div>
+
+  <!-- ======================================================
+       PANTALLA DE INICIO DE SESIÓN
+       ====================================================== -->
+  <main id="loginView" class="login-page">
+    <section class="login-card">
+
+      <div class="login-brand">
+        <img
+          src="assets/logo.png"
+          alt="Logo Alerta Recargas"
+          class="login-logo"
+          onerror="this.style.display='none'"
+        >
+
+        <p class="eyebrow">CONTROL OPERATIVO</p>
+
+        <h1>ALERTA RECARGAS</h1>
+
+        <p class="login-subtitle">
+          Control operativo de inicio y fin de recargas
+        </p>
       </div>
 
-      <div id="heroSession" class="hero-session hidden">
-        <strong id="userName">Usuario</strong>
-        <p id="userMeta"></p>
-        <span id="agencyChip" class="chip"></span>
-        <div class="hero-actions">
-          <button id="btnRefresh" class="btn secondary" type="button">Actualizar</button>
-          <button id="btnLogout" class="btn secondary" type="button">Salir</button>
-        </div>
-      </div>
-    </section>
+      <form id="loginForm" class="login-form" autocomplete="off">
 
-    <section id="loginCard" class="panel login-panel">
-      <h2>Ingreso al sistema</h2>
-      <div class="login-grid">
-        <div>
-          <label for="codigo">Código de acceso</label>
-          <input id="codigo" type="password" autocomplete="current-password" placeholder="Ingrese su código de acceso">
-        </div>
-        <button id="btnLogin" class="btn primary" type="button">Ingresar</button>
-      </div>
-      <p id="loginStatus" class="status"></p>
-    </section>
+        <label for="codigoAcceso">
+          Código de acceso
+        </label>
 
-    <section id="mainPanel" class="hidden">
-      <section class="control-panel panel">
-        <div id="filtersCard" class="agency-column hidden">
-          <label for="fAgencia">Agencia</label>
-          <select id="fAgencia"></select>
-          <div class="filters-grid">
-            <select id="fEstado" aria-label="Estado">
-              <option value="">Todos los estados</option>
-              <option value="ABIERTA">ABIERTA</option>
-              <option value="CERRADA">CERRADA</option>
-              <option value="ANULADA">ANULADA</option>
-            </select>
-            <input id="fPlaca" type="search" placeholder="Buscar placa">
-          </div>
-        </div>
+        <input
+          id="codigoAcceso"
+          name="codigoAcceso"
+          type="password"
+          placeholder="INGRESE SU CÓDIGO DE ACCESO"
+          maxlength="50"
+          required
+        >
 
-        <div class="control-copy">
-          <h2>Control de recarga</h2>
-          <p id="controlDescription">Visualiza y controla la operación de la agencia seleccionada.</p>
+        <button id="btnIngresar" type="submit" class="btn btn-light">
+          Ingresar
+        </button>
 
-          <div id="placaActions" class="placa-actions hidden">
-            <textarea id="observacion" rows="2" placeholder="Observación opcional"></textarea>
-            <div class="actions">
-              <button id="btnStart" class="btn primary" type="button">Iniciar recarga</button>
-              <button id="btnFinishMine" class="btn danger" type="button">Finalizar recarga</button>
-            </div>
-          </div>
-        </div>
-      </section>
+        <p id="loginStatus" class="status-message" aria-live="polite"></p>
 
-      <section class="kpis">
-        <article class="kpi"><span>Total recargas</span><strong id="kpiTotal">0</strong></article>
-        <article class="kpi"><span>Recargas abiertas</span><strong id="kpiAbiertas" class="gold">0</strong></article>
-        <article class="kpi"><span>Recargas cerradas</span><strong id="kpiCerradas" class="green">0</strong></article>
-        <article class="kpi"><span>Promedio duración</span><strong><span id="kpiPromedio">0</span> min</strong></article>
-        <article class="kpi"><span>Mayor tiempo abierto</span><strong><span id="kpiMayor">0</span> min</strong></article>
-      </section>
-
-      <section class="history-panel panel">
-        <div class="section-title">
-          <div>
-            <h2>Historial de recargas</h2>
-            <p>Mostrando últimos 7 día(s). Actualizado: <span id="updatedAt">—</span></p>
-          </div>
-          <span id="apiStatus" class="status"></span>
-        </div>
-
-        <div class="table-wrap">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Placa</th>
-                <th>Agencia</th>
-                <th>Estado</th>
-                <th>Inicio recarga</th>
-                <th>Fin recarga</th>
-                <th>Tiempo</th>
-                <th>N.º recarga día</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="historyBody"></tbody>
-            <tr>
-              <td class="empty-row" colspan="8">
-                </td>
-            </tr>
-          </table>
-        </div>
-      </section>
+      </form>
     </section>
   </main>
 
+
+  <!-- ======================================================
+       DASHBOARD
+       ====================================================== -->
+  <main id="dashboardView" class="dashboard-page hidden">
+
+    <header class="topbar">
+      <div class="topbar-brand">
+
+        <img
+          src="assets/logo.png"
+          alt="Logo"
+          class="topbar-logo"
+          onerror="this.style.display='none'"
+        >
+
+        <div>
+          <p class="eyebrow">CONTROL OPERATIVO</p>
+          <h2>ALERTA RECARGAS</h2>
+          <p class="topbar-subtitle">
+            Control operativo de inicio y fin de recargas
+          </p>
+        </div>
+      </div>
+
+      <div class="topbar-user">
+        <div class="user-data">
+          <strong id="usuarioNombre">Usuario</strong>
+          <span id="usuarioRol">Rol</span>
+        </div>
+
+        <button id="btnActualizar" class="btn btn-outline" type="button">
+          Actualizar
+        </button>
+
+        <button id="btnSalir" class="btn btn-danger" type="button">
+          Salir
+        </button>
+      </div>
+    </header>
+
+
+    <section class="dashboard-grid">
+
+      <!-- FILTRO DE AGENCIA -->
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">FILTRO OPERATIVO</p>
+            <h3>Agencia</h3>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="fAgencia">Seleccionar agencia</label>
+
+          <select id="fAgencia">
+            <option value="">Todas las agencias</option>
+          </select>
+        </div>
+      </article>
+
+
+      <!-- CONTROL DE RECARGA -->
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-kicker">GESTIÓN</p>
+            <h3>Control de recarga</h3>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="placaInput">Placa</label>
+            <input
+              id="placaInput"
+              type="text"
+              placeholder="Ejemplo: F6F787"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="observacionInput">Observación</label>
+            <input
+              id="observacionInput"
+              type="text"
+              placeholder="Observación opcional"
+            >
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="btnIniciarRecarga" class="btn btn-primary" type="button">
+            Iniciar recarga
+          </button>
+
+          <button id="btnFinalizarRecarga" class="btn btn-danger" type="button">
+            Finalizar recarga
+          </button>
+        </div>
+
+        <p id="recargaStatus" class="status-message" aria-live="polite"></p>
+      </article>
+
+    </section>
+
+
+    <!-- INDICADORES -->
+    <section class="metrics-grid">
+
+      <article class="metric-card">
+        <span>Total recargas</span>
+        <strong id="totalRecargas">0</strong>
+      </article>
+
+      <article class="metric-card">
+        <span>Recargas abiertas</span>
+        <strong id="recargasAbiertas">0</strong>
+      </article>
+
+      <article class="metric-card">
+        <span>Recargas cerradas</span>
+        <strong id="recargasCerradas">0</strong>
+      </article>
+
+      <article class="metric-card">
+        <span>Promedio duración</span>
+        <strong id="promedioDuracion">0 min</strong>
+      </article>
+
+      <article class="metric-card">
+        <span>Mayor tiempo abierto</span>
+        <strong id="mayorTiempo">0 min</strong>
+      </article>
+
+    </section>
+
+
+    <!-- HISTORIAL -->
+    <section class="panel history-panel">
+
+      <div class="panel-header history-header">
+        <div>
+          <p class="section-kicker">TRAZABILIDAD</p>
+          <h3>Historial de recargas</h3>
+        </div>
+
+        <span id="historyCount" class="history-count">
+          0 registros
+        </span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Placa</th>
+              <th>Agencia</th>
+              <th>Estado</th>
+              <th>Inicio recarga</th>
+              <th>Fin recarga</th>
+              <th>Tiempo</th>
+              <th>N.º recarga día</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+
+          <tbody id="historyBody">
+            <tr>
+              <td colspan="8" class="empty-row">
+                Sin registros para mostrar.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+
   <script src="config.js"></script>
   <script src="app.js"></script>
+
 </body>
 </html>
