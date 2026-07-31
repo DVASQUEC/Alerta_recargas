@@ -1,5 +1,10 @@
+/* =========================================================
+   CONFIGURACIÓN
+   Reemplaza la URL por la implementación real de Apps Script.
+   Debe terminar en /exec
+   ========================================================= */
+
 window.APP_CONFIG = {
-  // Pega aquí la URL de tu implementación de Apps Script terminada en /exec
-  API_URL: 'https://script.google.com/macros/s/AKfycbw1QnCVp_tniHlFF9xED8aEZB-grtyail_vmhFqYIsG9oCD2Uc8LKly-1yxkrdclML5QQ/exec',
-  APP_NAME: 'ALERTA RECARGAS'
+  API_URL: "https://script.google.com/macros/s/AKfycby7XECR6dfuOO3jfDm8F8ORDnFnR6p2OxBjR3FolRlbZvCxNux8OkB2stsvQ0t5thlh3Q/exec",
+  APP_NAME: "ALERTA RECARGAS"
 };
