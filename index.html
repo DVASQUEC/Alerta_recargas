@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080808">
+  <title>Alerta Recargas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero card">
+      <div class="logo">N</div>
+      <div class="hero-copy">
+        <div class="eyebrow">CONTROL OPERATIVO</div>
+        <h1>ALERTA RECARGAS</h1>
+        <p id="subtitle">Control de recargas por agencia</p>
+      </div>
+      <button id="btnLogout" class="btn secondary hidden" type="button">Salir</button>
+    </header>
+
+    <section id="loginCard" class="card login-card">
+      <h2>Ingreso al sistema</h2>
+      <label for="codigo">Código de acceso</label>
+      <input id="codigo" type="password" autocomplete="current-password" placeholder="Ejemplo: SIS001">
+      <button id="btnLogin" class="btn primary" type="button">Ingresar</button>
+      <p id="loginStatus" class="status"></p>
+    </section>
+
+    <section id="mainPanel" class="hidden">
+      <section class="card user-card">
+        <div>
+          <strong id="userName">Usuario</strong>
+          <p id="userMeta"></p>
+          <span id="agencyChip" class="chip"></span>
+        </div>
+        <button id="btnRefresh" class="btn secondary" type="button">Actualizar</button>
+      </section>
+
+      <section id="filtersCard" class="card hidden">
+        <label for="fAgencia">Agencia</label>
+        <select id="fAgencia"></select>
+        <div class="filters-grid">
+          <select id="fEstado">
+            <option value="">Todos los estados</option>
+            <option value="ABIERTA">ABIERTA</option>
+            <option value="CERRADA">CERRADA</option>
+            <option value="ANULADA">ANULADA</option>
+          </select>
+          <input id="fPlaca" type="search" placeholder="Buscar placa">
+        </div>
+      </section>
+
+      <section id="placaActions" class="card hidden">
+        <h2>Control de recarga</h2>
+        <textarea id="observacion" rows="2" placeholder="Observación opcional"></textarea>
+        <div class="actions">
+          <button id="btnStart" class="btn primary" type="button">Iniciar recarga</button>
+          <button id="btnFinishMine" class="btn danger" type="button">Finalizar recarga</button>
+        </div>
+      </section>
+
+      <section class="kpis">
+        <article class="kpi"><span>Total recargas</span><strong id="kpiTotal">0</strong></article>
+        <article class="kpi"><span>Recargas abiertas</span><strong id="kpiAbiertas" class="gold">0</strong></article>
+        <article class="kpi"><span>Recargas cerradas</span><strong id="kpiCerradas" class="green">0</strong></article>
+        <article class="kpi"><span>Promedio duración</span><strong><span id="kpiPromedio">0</span> min</strong></article>
+        <article class="kpi"><span>Mayor tiempo abierto</span><strong><span id="kpiMayor">0</span> min</strong></article>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <h2>Recargas recientes</h2>
+          <span id="apiStatus" class="status"></span>
+        </div>
+        <div id="cardsList" class="recargas-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
