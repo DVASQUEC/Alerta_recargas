@@ -67,12 +67,17 @@ function renderSession() {
   const u = state.session.usuario;
   $('loginCard').classList.add('hidden');
   $('mainPanel').classList.remove('hidden');
-  $('btnLogout').classList.remove('hidden');
+  $('heroSession').classList.remove('hidden');
   $('userName').textContent = u.nombre_usuario || u.usuario_id || u.placa;
   $('userMeta').textContent = `Rol: ${u.rol}${u.rol === 'SISTEMA' ? ' (visualiza todas las agencias)' : ''}`;
   $('agencyChip').textContent = `${u.rol === 'SISTEMA' ? 'Sistema' : u.placa || 'Usuario'} · ${u.agencia || 'Todas las agencias'}`;
   $('placaActions').classList.toggle('hidden', u.rol !== 'PLACA');
   $('filtersCard').classList.toggle('hidden', u.rol === 'PLACA');
+  $('controlDescription').textContent = u.rol === 'SISTEMA'
+    ? 'El usuario sistema visualiza la operación de la agencia seleccionada. En esta versión no inicia ni finaliza recargas.'
+    : u.rol === 'PLACA'
+      ? 'Registra el inicio y la finalización de la recarga de la unidad.'
+      : 'Visualiza y controla la operación de la agencia asignada.';
 
   const select = $('fAgencia');
   select.innerHTML = '<option value="">Todas las agencias</option>';
@@ -108,6 +113,7 @@ async function refreshDashboard() {
     state.rows = res.data || [];
     renderKpis(res.resumen || {});
     renderRows(state.rows);
+    $('updatedAt').textContent = new Date().toLocaleString('es-PE', { hour12: false });
     setStatus('apiStatus', 'Actualizado', 'ok');
   } catch (err) {
     setStatus('apiStatus', err.message, 'error');
@@ -127,25 +133,30 @@ function escapeHtml(value) {
 }
 
 function renderRows(rows) {
-  const list = $('cardsList');
+  const body = $('historyBody');
   if (!rows.length) {
-    list.innerHTML = '<div class="recarga">No hay recargas para mostrar.</div>';
+    body.innerHTML = '<tr><td class="empty-row" colspan="8">Sin registros para mostrar.</td></tr>';
     return;
   }
-  list.innerHTML = rows.map(r => {
+
+  body.innerHTML = rows.map(r => {
     const canFinish = r.estado === 'ABIERTA' && state.session.usuario.rol === 'PLACA' && r.placa === state.session.usuario.placa;
-    return `<article class="recarga">
-      <div class="recarga-head"><strong>${escapeHtml(r.placa)}</strong><span class="badge ${escapeHtml(r.estado)}">${escapeHtml(r.estado)}</span></div>
-      <div class="recarga-grid">
-        <div>Agencia<b>${escapeHtml(r.agencia)}</b></div>
-        <div>Inicio<b>${escapeHtml(r.inicio_recarga)}</b></div>
-        <div>Duración<b>${escapeHtml(r.estado === 'ABIERTA' ? r.tiempo_abierto_actual_min : r.duracion_min)} min</b></div>
-        <div>Fecha<b>${escapeHtml(r.fecha_operativa)}</b></div>
-        <div>N.º del día<b>${escapeHtml(r.nro_recarga_dia)}</b></div>
-        <div>Alerta<b>${escapeHtml(r.alerta)}</b></div>
-      </div>
-      ${canFinish ? `<button class="btn danger" style="width:100%;margin-top:14px" onclick="finishRecharge('${escapeHtml(r.recarga_id)}')">Finalizar</button>` : ''}
-    </article>`;
+    const tiempo = r.estado === 'ABIERTA' ? r.tiempo_abierto_actual_min : r.duracion_min;
+    const fin = r.fin_recarga || '—';
+    const action = canFinish
+      ? `<button class="btn danger table-action" onclick="finishRecharge('${escapeHtml(r.recarga_id)}')">Finalizar</button>`
+      : '—';
+
+    return `<tr>
+      <td data-label="Placa"><strong>${escapeHtml(r.placa)}</strong></td>
+      <td data-label="Agencia">${escapeHtml(r.agencia)}</td>
+      <td data-label="Estado"><span class="badge ${escapeHtml(r.estado)}">${escapeHtml(r.estado)}</span></td>
+      <td data-label="Inicio recarga">${escapeHtml(r.inicio_recarga || '—')}</td>
+      <td data-label="Fin recarga">${escapeHtml(fin)}</td>
+      <td data-label="Tiempo">${escapeHtml(tiempo || 0)} min</td>
+      <td data-label="N.º recarga día">${escapeHtml(r.nro_recarga_dia || '—')}</td>
+      <td data-label="Acción">${action}</td>
+    </tr>`;
   }).join('');
 }
 
